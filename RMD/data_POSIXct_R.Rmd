@@ -1,0 +1,78 @@
+---
+title: "Date and POSIXct Class in R"
+author: "Redzuan"
+date: "4/4/2020"
+output: html_document
+---
+
+Date and POSIXct, What are the main different.
+
+ + Date and POSIXct are different class object. Date representing calendar date while POSIXct represent calendar dates and time
+ + Date is stored as number of days from 1st Jan 1970
+ + POSIXct is stored as number of seconds from 1st Jan 1970
+ 
+ 
+The basis for any calculation and manipulation involving Date's and POSIXct object should considered above as main rules.
+
+Let's see how both class behave in certain operation.
+
+
+## Date class
+```{r}
+#Date class example produced from Sys.Date
+
+date_class_ex <- Sys.Date()
+date_class_ex
+
+class(date_class_ex)
+
+
+#Use unclass() to see what is a value that R store. This returns number of days since 1st Jan 1970
+
+number_of_days_from_origin <- unclass(date_class_ex) 
+number_of_days_from_origin
+
+
+#Calculation for date class can be straighforward as simple numerical operation. The unit for number should be treat as day.
+
+#Let's try with decrement date operation
+date_of_origin <- date_class_ex - number_of_days_from_origin
+date_of_origin
+
+
+
+
+
+```
+
+
+## POSIXct Class
+```{r}
+#POSIXct class object example
+
+POSIXct_class_ex <- Sys.time()
+
+POSIXct_class_ex
+
+#class of POSIXct object
+class(POSIXct_class_ex)
+
+
+#Use unclass() to see what is a value that R store. This returns number of seconds since 1st Jan 1970
+
+number_of_seconds_from_origin <- unclass(POSIXct_class_ex)
+number_of_seconds_from_origin
+
+
+#Calculation for POSIXct class can be straighforward as simple numerical operation. The unit for number should be treat as second.
+
+#Let's try with decrement operation for POSIXct object
+
+POSIXct_of_origin <- POSIXct_class_ex - number_of_seconds_from_origin
+POSIXct_of_origin
+
+
+
+```
+
+ 

@@ -1,0 +1,68 @@
+---
+title: "Working WIth Date and Time from Excel"
+author: "Redzuan"
+date: "3/28/2020"
+output: html_document
+---
+
+Load Sample Data from Excel
+```{r}
+library(readxl)
+date_excel <- read_excel("../Excel_sample/date_format_example.xlsx")
+
+date_excel
+
+```
+
+
+View data structure summary
+```{r}
+library(dplyr)
+glimpse(date_excel)
+```
+
+read_excel will coerce the date and time to character if there is multiple data types in date or time column. In this Excel's sample there are value with character type that intentionally insert to pretend wrong date or time input. Noted that on all the actual date and time value are transformed to "numeric" form. So, what is the "numeric" value read by R here?
+
+R is actually reading the date's serial number from Excel. To understand this, we need to understand on how Excel's handling the date and time. All date and time in excel stores as sequential of serial numbers beginning at 1st January 1900. The date serial number for 1st January 1900 is 1, 2 for 2nd January 1900 and so on. Date with serial number 1000 is safely to be read as 1000 days after 1st January 1900. The fraction in serial number indicate there is also time attached to the date. 
+
+
+This [link](https://support.office.com/en-us/article/datevalue-function-df8b07d4-7761-4a93-bc33-b7471bbff252) provide more details explanation on how Excel handle the date. 
+
+In R have we have to input the origin or offset to convert date serial number from Excel. The origin should have serial number of 0 which is equivalent to date of 31st December 1899. 
+
+
+## Convert to Date and Time Format
+
+```{r}
+date_excel_update <- date_excel %>% 
+  mutate(Date_update = as.Date(as.numeric(Date), origin = "1899-12-31"),
+         Time_update = as.POSIXct(as.numeric(Time)*24*60*60, origin = "1899-12-31", tz="UTC"))
+
+
+date_excel_update
+
+```
+Let's see what is the current class of Date_update and Time_update variable. They are now converted with "Date" and "POSIXct" class respectively
+```{r}
+class(date_excel_update$Date_update)
+class(date_excel_update$Time_update)
+
+```
+
+
+## Formatting Date and Time
+
+Further date and time formating can be done using format function and convertion specification format for date and time of strptime function. 
+
+```{r}
+format(date_excel_update$Date_update, "%Y/%m/%d")
+format(date_excel_update$Time_update, "%H:%M:%S")
+
+```
+
+
+
+
+
+
+
