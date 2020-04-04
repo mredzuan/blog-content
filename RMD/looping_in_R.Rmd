@@ -1,0 +1,129 @@
+---
+title: "Looping in R"
+author: "Redzuan"
+date: "3/31/2020"
+output: html_document
+---
+
+```{r setup, cache = F}
+knitr::opts_chunk$set(error = TRUE)
+```
+
+Example 1: Looping in data frame
+
+
+Create sample data frame with NA
+```{r}
+set.seed(123)
+
+a <- sample(LETTERS, 50, replace = T)
+#create random NA
+a[a %in% sample(a,7)] <- NA
+
+b <- sample(1:50, 50, replace = T)
+#create random NA
+b[b %in% sample(b,7)] <- NA
+
+c <- sample(1:100, 50, replace = F)
+
+df <- data.frame(a,b,c)
+
+df
+
+```
+
+
+
+Create function that returns how many NA's and not NA's on vector 
+```{r}
+
+check_NA <- function(x){
+  
+  table(is.na(x))
+  
+}
+
+```
+
+
+Looping through each df column
+
+
+
+```{r}
+
+
+#Initialize output as list 
+
+result <- list()
+
+for (i in seq_along(df)){
+  
+  result[[i]] = check_NA(df[[i]])
+  
+ 
+}
+
+result
+
+
+```
+
+
+Create function to check NA in data frame with looping. Throw error message to notify user if input is not data frame class.
+
+```{r}
+
+check_is_na <- function(dataset){
+  
+  check_NA <- function(x){
+  
+  table(is.na(x))
+  
+  }
+  
+  if(!is.data.frame(dataset)){
+    
+    stop("Dataset must be in data.frame class. You have input ", class(dataset), " class.")
+    
+  }
+  
+  
+  result <- list()
+  
+  for (i in seq_along(dataset)){
+    
+    result[[i]] = check_NA(dataset[[i]])
+    names(result)[[i]] <- names(dataset)[i]
+   
+  }
+  
+  
+  result
+  
+
+}
+
+
+check_is_na(df)
+
+```
+
+Function check_is_na will throw error if object is not data frame class. 
+```{r}
+#Pass vector
+check_is_na(c(1,2,3,NA))
+
+#Pass matrix
+check_is_na(matrix(data = 1:10, nrow = 2, ncol = 5))
+
+
+```
+
+
+```{r}
+lapply(df, check_NA)
+sapply(df, check_NA)
+
+```
+
