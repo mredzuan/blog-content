@@ -369,6 +369,7 @@ summary {
 </div>
 
 
+<p>More often during preparing dataset for data analysis, we might need to introduce new columns based on certain condition from existing records in data frame. In this post we will see how we can implement this task using R base syntax.</p>
 <p>Introduce sample data from iris dataset</p>
 <pre class="r"><code>df_iris &lt;- iris
 
@@ -387,7 +388,7 @@ summary(df_iris)</code></pre>
 ##                 
 ##                 
 ## </code></pre>
-<p>Let’s shorten up species name to only first 3 characters and place in new column of “species_short”</p>
+<p>Let’s shorten up species name to only first 3 characters and place in new column of “species_short”.</p>
 <pre class="r"><code>#introduce new column species_short
 
 df_iris[&quot;species_short&quot;] &lt;- as.character()
@@ -395,7 +396,7 @@ df_iris[&quot;species_short&quot;] &lt;- as.character()
 df_iris[df_iris$Species == &quot;setosa&quot;, &quot;species_short&quot;] &lt;- &quot;set&quot;
 df_iris[df_iris$Species == &quot;versicolor&quot;, &quot;species_short&quot;] &lt;- &quot;ver&quot;
 df_iris[df_iris$Species == &quot;virginica&quot;, &quot;species_short&quot;] &lt;- &quot;vir&quot;</code></pre>
-<p>Create new column with more than 1 condition. Assuming we want to flag dataset that having Sepal.Length &gt; 5 &amp; Petal.Length &gt; 5. If this observation is met, logical TRUE value will be returned in new column of “sepal_petal_mt_5”</p>
+<p>Create new column with more than 1 condition. Assuming we want to flag dataset that having Sepal.Length &gt; 5 &amp; Petal.Length &gt; 5. If these conditions is met, logical TRUE value will be returned in new column of “sepal_petal_mt_5”</p>
 <pre class="r"><code>df_iris[&quot;sepal_petal_mt_5&quot;] &lt;- as.character()
 
 df_iris[df_iris$Sepal.Length &gt; 5 &amp; df_iris$Petal.Length &gt; 5, &quot;sepal_petal_mt_5&quot; ] &lt;- TRUE</code></pre>

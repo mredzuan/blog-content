@@ -6,6 +6,8 @@ output: html_document
 ---
 
 
+More often during preparing dataset for data analysis, we might need to introduce new columns based on certain condition from existing records in data frame. In this post we will see how we can implement this task using R base syntax. 
+
 
 Introduce sample data from iris dataset
 ```{r}
@@ -16,7 +18,7 @@ summary(df_iris)
 ```
 
 
-Let's shorten up species name to only first 3 characters and place in new column of "species_short"
+Let's shorten up species name to only first 3 characters and place in new column of "species_short".
 
 
 ```{r}
@@ -32,7 +34,7 @@ df_iris[df_iris$Species == "virginica", "species_short"] <- "vir"
 ```
 
 
-Create new column with more than 1 condition. Assuming we want to flag dataset that having Sepal.Length > 5 & Petal.Length > 5. If this observation is met, logical TRUE value will be returned in new column of "sepal_petal_mt_5"
+Create new column with more than 1 condition. Assuming we want to flag dataset that having Sepal.Length > 5 & Petal.Length > 5. If these conditions is met, logical TRUE value will be returned in new column of "sepal_petal_mt_5"
 
 ```{r}
 
