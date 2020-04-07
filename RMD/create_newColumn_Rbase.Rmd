@@ -1,0 +1,51 @@
+---
+title: "Introduce New Column in Data Frame -  R Base Approach"
+author: "Redzuan"
+date: "4/7/2020"
+output: html_document
+---
+
+
+
+Introduce sample data from iris dataset
+```{r}
+df_iris <- iris
+
+summary(df_iris)
+
+```
+
+
+Let's shorten up species name to only first 3 characters and place in new column of "species_short"
+
+
+```{r}
+#introduce new column species_short
+
+df_iris["species_short"] <- as.character()
+
+df_iris[df_iris$Species == "setosa", "species_short"] <- "set"
+df_iris[df_iris$Species == "versicolor", "species_short"] <- "ver"
+df_iris[df_iris$Species == "virginica", "species_short"] <- "vir"
+
+
+```
+
+
+Create new column with more than 1 condition. Assuming we want to flag dataset that having Sepal.Length > 5 & Petal.Length > 5. If this observation is met, logical TRUE value will be returned in new column of "sepal_petal_mt_5"
+
+```{r}
+
+df_iris["sepal_petal_mt_5"] <- as.character()
+
+df_iris[df_iris$Sepal.Length > 5 & df_iris$Petal.Length > 5, "sepal_petal_mt_5" ] <- TRUE
+
+
+```
+
+Final dataset
+
+```{r}
+df_iris
+```
+
