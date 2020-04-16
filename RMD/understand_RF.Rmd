@@ -1,0 +1,64 @@
+---
+title: "Understand ML with Random Forest"
+author: "Redzuan"
+date: "4/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+Load and prepare sample dataset
+```{r}
+library(readr)
+
+#load dataset
+soc_net_ad <- read_csv("../Dataset/Social_Network_Ads.csv")
+
+
+#set dependant variable to factor
+soc_net_ad$Gender <- as.factor(soc_net_ad$Gender)
+soc_net_ad$Purchased <- as.factor(soc_net_ad$Purchased)
+
+#select only required columns, removed user ID
+
+soc_net_ad <- subset(soc_net_ad, select = c(-`User ID`))
+
+
+str(soc_net_ad)
+
+```
+
+
+Split dataset to training and test dataset
+```{r}
+library(caTools)
+
+set.seed(123)
+
+split_ratio <- sample.split(soc_net_ad$Purchased, SplitRatio = 0.8)
+
+training_set <- subset(soc_net_ad, split_ratio == T)
+test_set <- subset(soc_net_ad, split_ratio == F)
+
+
+```
+
+
+Fitting training dataset to Random Forest Algorithm
+```{r}
+library(randomForest)
+
+RF_model <- randomForest( x = training_set[-4],
+                          y = training_set$Purchased,
+                          ntree = 500)
+
+
+
+
+
+```
+
