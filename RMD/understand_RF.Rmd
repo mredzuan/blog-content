@@ -1,17 +1,30 @@
 ---
-title: "Understand ML with Random Forest"
+title: "Output from Random Forest Model for Classification Problem"
 author: "Redzuan"
 date: "4/16/2020"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 
+## General Random Forest Intuition
 
-Load and prepare sample dataset
+Random Forest is an *ensamble* model which constructed from a Decision Tree base model. The main conceptual different between both models is a Decision Tree is built on entire dataset whereas Random Forest randomly pick observations and variables of interest from dataset to build multiple decision trees. For a new data point, each of multiple decision trees constructed in Random Forest model will predict and have their own predicted category. Category that wins simple majority "vote" from each of multiple decision tree predicted ouput is considered as the predicted category from Random Forest classifier. 
+
+
+### Generic Steps for Random Forest Construction 
+
+ i. Randomly select sub-dataset from training dataset
+ ii. Build decision tree from selected sub-dataset
+ iii. Repeat (i) and (ii) for multiple number of decision trees
+ iv. Pass new data point to each of decision trees decision trees to predict the result. Assign the result that have majority vote as a "winner" and become the predicted result for Random Forest model. 
+ 
+
+
+### Load and Prepare Dataset Sample
 ```{r}
 library(readr)
 
@@ -19,7 +32,7 @@ library(readr)
 soc_net_ad <- read_csv("../Dataset/Social_Network_Ads.csv")
 
 
-#set dependant variable to factor
+#set dependant and all chracter variables to factor
 soc_net_ad$Gender <- as.factor(soc_net_ad$Gender)
 soc_net_ad$Purchased <- as.factor(soc_net_ad$Purchased)
 
@@ -48,17 +61,109 @@ test_set <- subset(soc_net_ad, split_ratio == F)
 ```
 
 
-Fitting training dataset to Random Forest Algorithm
+### Fitting Training and Test Dataset to Random Forest Algorithm.
+
+`randomForest()` function allows test data to be inputted together during train the model. This is a nice feature as it shortcut the predict implementation for test dataset. The result from predict and test dataset are separated as different list object component in the Random Forest Model object.
+
+
 ```{r}
 library(randomForest)
 
+#Pass predictor, and only response vector to randomForest function. Dafault argument for number of trees to grow is 500 
 RF_model <- randomForest( x = training_set[-4],
                           y = training_set$Purchased,
-                          ntree = 500)
-
-
-
-
+                          xtest = test_set[-4],
+                          ytest = test_set$Purchased) 
 
 ```
+
+
+### Random Forest Model's Components
+
+See what are the values and components available in RF_model object
+```{r}
+str(RF_model)
+```
+
+
+#### Components in Random Forest Model
+
++ call: Original call to random forest.
+\
+
++ type: Type of problem class either regression, classification or unsupervised. On this example it is classification problem
+\
+
++ predicted: The predicted values of the input based on out-of-bag samples (OOB). OOB is not used in traininng dataset, it's unseen. 
+\
+
+```{r}
+summary(RF_model$predicted)
+
+head(RF_model$predicted, 10)
+```
+
++ err.rate: This is the matrix object which indicate the error rate for all the trees in Random Forest model. Only available for classification problem only.
+
+```{r}
+#inspect structure of err.rate matrix. Should return matrix with dimension of 500 X 3 for this RF model
+str(RF_model$err.rate)
+
+#print some err.rate matrix data
+head(RF_model$err.rate)
+
+#Plot err.rate as a function of the number of trees trained. 
+plot(RF_model)
+
+#Add legend
+legend( x = "right",
+        legend = colnames(RF_model$err.rate),
+        fill = 1:ncol(RF_model$err.rate))
+
+```
+ 
+This plot show how the error evolves over the number of trees introduce in the model. The error curve show plateu region is reached around at 100 trees which might indicate the optimum number of trees required to grow for this dataset. It is nothing wrong in using high number of trees but the training time might take relatively longer time for bigger dataset. 
+ 
+ \
+
++ confusion: Confusion matrix of the prediction (Classification only). This matrix indicate confusion matrix and can be used to compute traning set accuracy. 
+```{r}
+RF_model[["confusion"]]
+```
+
+Model performance can be further evaluated with confusionMatrix() function from caret package
+```{r}
+library(caret)
+confusionMatrix(RF_model$predicted, training_set$Purchased)
+
+
+#compare accuracy from confusion matrix to OOB accuracy
+
+#Final OOB error rate from last tree in RF
+1 - RF_model$err.rate[nrow(RF_model$err.rate), "OOB"]
+
+```
+
+ 
+\
+
++ votes: A matrix with one row for each input data point and one column for each class, giving the fraction or number of (OOB) ‘votes’ from the random forest. Only for classification problem.
+```{r}
+str(RF_model$votes)
+
+head(RF_model$votes)
+
+```
+
++ ntree: Number of trees grow in the Random Forest model
+\
+
++ mtry: Number of variables randomly sampled as candidates at each split. For classifcation, the default values is (sqrt(p) where p is number of predictors in training dataset) 
+
++ test: List object of predicted Random Forest model results from test dataset input. This component is only available if test set is input as part of argument in `randomForest()` function. In general, it contains similar list of component generated for training dataset.
+
+
+### Reference
+[randomForest Package Manual](https://cran.r-project.org/web/packages/randomForest/randomForest.pdf)
+
 
