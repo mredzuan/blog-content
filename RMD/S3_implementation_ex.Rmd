@@ -1,0 +1,158 @@
+---
+title: "S3 Implementation Example"
+author: "Redzuan"
+date: "4/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE, message = FALSE)
+```
+
+## Motivation
+
+There are several Object Oriented (OOB) system  implemented for object model in R. S3, S4, R6 are among of them. In general OOB is different way of programming method which usually used in building tools or applications and it was constructed and work for specific object class. Learning OOB subject is quite intimidating at the beginning and the only way to overcome this "fear" is do some experiments to understand how different OOB concepts such as encapsulation, polymorphism and inherit work.
+
+This post will demonstrate how to implement S3 method to extract high level information content from Excel and PDF files. This is actually part of the process in my recent project for data extraction for ~30,000 documents which mainly in Excel and PDF format. The main goal of project is to convert unstructed data and transform them to SQL format. In order to understand the actual work load for extraction process as well as preparing the master list for relational database parameters lookup, we need to obtain number of the real files to work on as the PDF and Excel documents are having multiple pages and worksheets respectively. 
+
+
+
+## Create R Object
+
+The path of PDF and xlsx file are created as object on this exercise. These objects will be the main argument input to the generic and method function with S3 implementation later. 
+
+```{r}
+
+#obtain file list with absolute directory path
+XLSX_file <- list.files("../", pattern = "xlsx", recursive = T)
+PDF_file <- list.files("../", pattern = "PDF", recursive = T)
+
+
+```
+
+## Assign New class Attribute to the Objects
+
+```{r}
+#assign specific class to xlsx and PDF path object
+class(XLSX_file) <- "S3_xlsx"
+
+class(PDF_file) <- "S3_PDF"
+
+
+
+#check structure of object
+str(XLSX_file)
+
+str(PDF_file)
+
+
+```
+
+
+
+## Creating S3 Method 
+
+This is the step where we going to create ``extract_doc_structure`` method for both ``S3_PDF`` and ``S3_xlsx`` class. 
+
+``UseMethod()`` function is used to define hierarchy of functions. The names of the methods have two parts, separated by a ".", where the prefix is the function name and the suffix is the name of a class. 
+
+As S3 generic functions work by naming conventions with "." is reserved to indicate function name and class therefore do not use "lower.leopard.case" format for the convention.
+
+
+
+```{r}
+
+#generic function for S3_xlsx class
+
+extract_doc_structure.S3_xlsx <- function(object){
+  
+  file_structure_info <- data.frame()
+  
+  file_directory <- object
+  
+  number_of_worksheet <- length(readxl::excel_sheets(paste0(object)))
+  
+  worksheet_name <- readxl::excel_sheets(paste0(object))
+  
+  file_structure_info <- cbind(file_directory, number_of_worksheet, worksheet_name)
+  
+  
+}
+
+
+
+#generic function for S3_PFD class
+extract_doc_structure.S3_PDF <- function(object){
+  
+  file_structure_info <- data.frame()
+  
+  file_directory <- object
+  
+  number_of_page <- pdftools::pdf_info(object)$page
+  
+  file_structure_info <- cbind(file_directory, number_of_page)
+  
+}
+
+
+
+#register method for generic function
+
+extract_doc_structure <- function(object){
+  
+  UseMethod("extract_doc_structure")
+  
+}
+
+
+
+```
+
+
+## Test S3 Method 
+```{r}
+
+setwd("../")
+
+#pass S3_xlsx class object to generic function
+xlsx_doc_str <- extract_doc_structure(XLSX_file)
+xlsx_doc_str
+
+#pass S3_PDF class object to generic function
+PDF_doc_str <- extract_doc_structure(PDF_file)
+PDF_doc_str
+
+
+#pass undefined class object to generic function -- error is expected to be thrown
+dataframe_str <- extract_doc_structure(iris)
+
+
+
+```
+
+
+
+
+## Create default Method
+
+If no suitable method is found for generic function, error is thrown as shown by example above where there is no method for ``data.frame`` class. We can handles all type that don't have specific method by implement default method. It always has the name ``generic.default``.
+
+```{r}
+
+#Create default method to generic function
+extract_doc_structure.default <- function(object){
+  
+  file_structure_info <- list(summary(object))
+  
+}
+
+
+#Test default method to data.frame again
+
+(extract_doc_structure(iris))
+
+
+```
+
+
+
