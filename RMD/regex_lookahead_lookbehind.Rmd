@@ -1,0 +1,116 @@
+---
+title: "Regex Lookahead & Lookbehind"
+author: "Redzuan"
+date: "4/24/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Introduction
+So, I’m in the task to assign specific code in the bunch of the text string list depending to certain patterns.
+
+However this is not quite straight forward task as what I initially thought as the pattern that i’m looking for foo have conditions not preceded or followed by too many other patterns.
+
+Let’s create some text’s examples to illustrate this problem. If foo is found and meet the criteria as described above then FOO’s code will be assigned and other codes will be returned otherwise.
+
+
+
+No. |          Text strings          | Required match | Code
+----|--------------------------------|----------------|-----
+1   |run foo for speed 30m/min       |Yes             |FOO
+2   |At 123 mTHF perform foo survey  |Yes             |FOO
+3   |Engineer prepare foo prior rigup|Yes             |FOO
+4   |RIH FOO as instructed to 122 mTHF|Yes             |FOO
+5   |Size 1.7" foo to be deployed    |Yes             |FOO
+6   |1.69 foo in BHA                 |Yes             |FOO
+7   |123m foo mTHF                   |No              |SOMETHING_ELSE
+8   |123ft FOO FTthf                 |No              |SOMETHING_ELSE
+9   |123 something (foo)             |No              |SOMETHING_ELSE
+10  |run something at 123 m foo ftTHF|No              |SOMETHING_ELSE
+11  |dummy run at 123' foo no success|No              |SOMETHING_ELSE
+12  |2432  foo bailing               |No              |SOMETHING_ELSE   
+
+
+The actual text strings is longer than what has been shown in several text examples above but the pattern can be safely develop by only considering the a few words or characters around the foo’s word.
+
+
+## The Approach
+
+The initial approach begin with defining negated character class pattern, however it seems quite tedious as there are just too many possible combinations to be constructed along with foo. So I decided to skip this very long-winded approach.
+
+
+Next work around is based on lookaround's method. Lookaround will match ``foo`` character if it exist in the text strings but then gives up the match if the pattern is unmatched with "condition" defined in lookahead or lookbehind. Details concept for this method can be found [here](https://www.regular-expressions.info/lookaround.html).
+
+To summarize, various combination can be constructed using lookaround method as below:
+
++ (?=) - Look ahead positive, e.g.: Q(?=U) matches a Q that is followed by a U
++ (?!) - Look ahead negative, e.g.: Q(?!U) match a Q not followed by a U
++ (?<=) - Look behind positive, e.g.: (?<=U)Q match a Q that is preceded by a U
++ (?<!) - Look behind negative, e.g.: (?<!U)Q match a Q that is not preceded by aU 
+
+
+In my case, I need to construct my Regex pattern with both negative lookahead and negative lookbehind. 
+
+
+
+```{r}
+#Crate ext string data frame
+
+text_string <- data.frame( text = c("run foo for speed 30m/min",
+                                   "At 123 mTHF perform foo survey",
+                                   "Engineer prepare foo prior rigup",
+                                   "RIH FOO as instructed to 122 mTHF",
+                                   "Size 1.7\" foo to be deployed",
+                                   "1.69 foo in BHA",
+                                   "123m foo mTHF ",
+                                   "123ft FOO FTthf",
+                                   "123 something (foo)",
+                                   "run something at 123 m foo FTthf",
+                                   "dummy run at 123' foo no success",
+                                   "2432 foo bailing"
+                                   ), 
+                           stringsAsFactors = FALSE
+                           )
+text_string
+
+
+
+#Create regex pattern
+reg_pat <- "(?<![']|\\d{4})\\sFOO\\s(?!(?:M|FT)THF)"
+reg_pat
+
+
+#Inspect if the pattern match as expected
+stringr::str_view(toupper(text_string$text), pattern = reg_pat)
+
+```
+
+
+#### The Pattern Explained
+
+In plain english, the constructed pattern will look up for the foo’s word in text strings and considered match if conditions below are met:
+
++ There is space before and after ``foo``
++ lookahead: not preceding by character "'" or 4 digits
++ lookbehind: not followed by "MTHF" or "FTTHF"
++ Text strings are to be transformed to UPPER CASE or ignore case to be explicitly defined in syntax
+
+
+
+#### Assigned the Code
+
+
+```{r}
+library(dplyr)
+
+text_string_coded <- text_string %>% 
+    mutate(CODE = ifelse(stringr::str_detect(toupper(text), pattern = reg_pat), "FOO", "SOMETHING_ELSE"))
+
+text_string_coded
+
+```
+
+
