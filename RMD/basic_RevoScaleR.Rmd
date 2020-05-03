@@ -1,0 +1,132 @@
+---
+title: "Basic RevoScaleR Function"
+author: "Redzuan"
+date: "5/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+RevoScaleR is a R package developed by Microsoft that allow R data processing computation to be done in remote server without the need to pull the data into R environment in local machine. The remote computation context by RevoScaleR package can be utilized on SQL server (2016 onward) and distributed platforms such as Spark and Hadoop. Details description of this package can be found in Microsoft online document [here](https://docs.microsoft.com/en-us/machine-learning-server/r-reference/revoscaler/revoscaler).
+
+In this post, basic use of RevoScaleR functions with data computation context in SQL Server will be demonstrated. They include:
+
++ Load CSV data to SQL Server database
++ Review data summary
++ Plot data
++ Import data from SQL to local R environment
+
+
+
+## Setup and Prerequisite
+
+This exercise was implemented using following environment and setup:
+
++ Microsoft SQL Server 2019 (RTM) - 15.0.2000.5 (X64) Developer Edition (64-bit) on Windows 10 Pro 10.0 with Machine Learning Services (R) installed
++ R version 3.5.2 (2018-12-20)
++ Run in local machine
++ Enable external script execution in SQL Server
++ Database permission to read, write and execute DDL permission is granted
++ sample_data Database was created in SQL server
++ Data input sample is from CSV format (Social_Network_Ads)
+
+
+### Load CSV Data to SQL Server
+```{r}
+
+#Define SQL connection string 
+sql_con_string <- "Driver=SQL Server;Server=DESKTOP-SKVB2GF;Database=sample_data;Trusted_Connection={Yes}"
+
+
+#Generate data source object as S4 RxTextData class
+social_netCSV <- RxTextData("../sample_data/Social_Network_Ads.csv")
+
+
+#Define column type to get data type conversion to SQL format correctly
+
+social_netCSV_colInfo <- list(`User ID` = list(type = "numeric"),
+                              Gender = list(type = "factor", levels = c("Male", "Female")),
+                              Age = list(type = "integer"),
+                              EstimatedSalary = list(type = "numeric"),
+                              Purchased = list(type = "factor", levels = c("0", "1")))
+
+
+#Generate SQL server data source object to S4 class RxSqlServerData
+social_netSQL <- RxSqlServerData(connectionString = sql_con_string,
+                                 table = "social_network_ads",  #name of table in database
+                                 colInfo = social_netCSV_colInfo)
+
+#Load CSV data to database
+rxDataStep(inData = social_netCSV,
+           outFile = social_netSQL,
+           overwrite = TRUE)
+
+
+```
+
+
+
+### Review Data Summary
+
+RevoScaleR object can be summarized using ``rxSummary`` function. The formula describe in ``rxFormula`` can be passed to this syntax and it allow basic categorical variables manipulation. Refer ``?rxFormula`` for details
+
+
+```{r}
+
+#summary for all variables
+rxSummary(~., data = social_netSQL) 
+
+#Purchased count by Gender
+rxSummary(~Purchased:Gender, data = social_netSQL) 
+
+#Purchased summary by Age's statistic
+rxSummary(~Purchased:Age, data = social_netSQL) 
+
+#Purchased summary by group of Age
+rxSummary(~Purchased:F(Age, low = 20, high = 25), data = social_netSQL) 
+
+```
+
+
+### Plot Data
+
+```{r}
+#Histogram
+rxHistogram(~Age, data = social_netSQL)
+
+rxHistogram(~Purchased | F(Age), data = social_netSQL)
+
+
+#Line plot
+rxLinePlot(Age ~ EstimatedSalary | Purchased, data = social_netSQL)
+
+
+#Scatter plot
+rxLinePlot(Age ~ EstimatedSalary | Purchased, data = social_netSQL, type = "p")
+
+
+```
+
+
+### Import Data from SQL to R Environment
+
+```{r}
+#Create SQL server data source object with SQL query
+
+sql_QueryObject <- RxSqlServerData(sqlQuery = "SELECT Gender, Purchased, COUNT(*) AS Count
+  FROM [sample_data].[dbo].[social_network_ads]
+  GROUP BY Gender, Purchased",
+  connectionString = sql_con_string)
+
+#Import data
+
+newDF <- rxImport(sql_QueryObject)
+
+
+
+```
+
