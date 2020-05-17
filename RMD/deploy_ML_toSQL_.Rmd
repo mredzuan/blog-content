@@ -1,0 +1,96 @@
+---
+title: "Deploy ML in SQL"
+author: "Redzuan"
+date: "5/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Setup database connection string and data object
+```{r}
+library(DBI)
+library(odbc)
+
+#Define SQL connection string 
+SQL_con <- dbConnect(odbc::odbc(), 
+                     dsn = "local_MSSQL",
+                     driver = "SQL Server Native Client 11.0",
+                     database = "sample_data",
+                     host = "local")
+
+
+
+```
+
+
+Get data from database to local environment
+```{r}
+soc_net_DF <- dbGetQuery(SQL_con, "SELECT *
+  FROM social_network_ads")
+
+str(soc_net_DF)
+
+```
+
+Data preparation
+```{r}
+#set dependant and all character variables to factor
+soc_net_DF$Gender <- as.factor(soc_net_DF$Gender)
+soc_net_DF$Purchased <- as.factor(soc_net_DF$Purchased)
+
+#select only required columns, removed user ID
+soc_net_DF <- subset(soc_net_DF, select = c(-User_ID))
+
+str(soc_net_DF)
+
+```
+
+
+Split dataset to training and test set
+```{r}
+library(caTools)
+
+set.seed(123)
+
+split_ratio <- sample.split(soc_net_DF$Purchased, SplitRatio = 0.8)
+
+training_set <- subset(soc_net_DF, split_ratio == T)
+test_set <- subset(soc_net_DF, split_ratio == F)
+```
+
+
+Fit training dataset to Random Forest Algorithm
+```{r}
+
+library(randomForest)
+
+RF_model <- randomForest( x = training_set[-4],
+                          y = training_set$Purchased)
+
+```
+
+Predict test dataset
+```{r}
+pred_testSet <- predict(RF_model, test_set[-4])
+pred_testSet
+
+result <- cbind(test_set, pred_testSet)
+
+
+#Confusion matrix
+table(pred_testSet, test_set$Purchased)
+
+```
+
+
+
+Load test and training dataset to SQL
+```{r}
+dbWriteTable(conn = SQL_con, "soc_net_Train", training_set, overwrite = TRUE)
+dbWriteTable(conn = SQL_con, "soc_net_Test", test_set, overwrite = TRUE)
+
+```
+
